@@ -4,17 +4,12 @@ import google.generativeai as genai
 import os
 
 ZALO_BOT_TOKEN = "24411053582055381:jhPyVSWiLZBGcJTwEUjydutgckIAfdaxjOtpGDMvYhxEvecIEuzvBzDpsoRCQSmj"
-GEMINI_API_KEY = "AIzaSyCqjp9FFzs2A5ntXEF6VJ2a2Cy-zuMJL5Y"
+GEMINI_API_KEY = "AIzaSyAuAGX3J0eNkQN7dmMzHFMseQHPUBjAFlI"
 
 genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Ép dùng thẳng model, không dò tìm nữa
-try:
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception as e:
-    model = None
-
-SYSTEM_PROMPT = """Bạn là trợ lý ảo của Lê Quốc Tài, 33 tuổi, quân nhân. Hãy trả lời ngắn gọn, súc tích (dưới 2000 ký tự). Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2, dùng Apple Watch Ultra 2, đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3. Tuyệt đối không có giày Asics Magic Speed."""
+SYSTEM_PROMPT = """Bạn là trợ lý ảo của Lê Quốc Tài, 33 tuổi, quân nhân. Hãy trả lời ngắn gọn, súc tích. Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2, dùng Apple Watch Ultra 2, đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3. Tuyệt đối không có giày Asics Magic Speed."""
 
 app = Flask(__name__)
 
@@ -25,17 +20,12 @@ def webhook():
         sender_id = data["message"]["chat"]["id"]
         user_message = data["message"]["text"]
         
-        # Nếu model không khởi tạo được ngay từ đầu
-        if model is None:
-            ai_reply = "Bot chưa khởi tạo được AI (Model lỗi)."
-        else:
-            try:
-                response = model.generate_content(SYSTEM_PROMPT + "\nUser hỏi: " + user_message)
-                ai_reply = response.text
-                if len(ai_reply) > 2000: ai_reply = ai_reply[:1990] + "..."
-            except Exception as e:
-                # Trả lời thẳng lỗi về Zalo để mình biết chính xác
-                ai_reply = "Lỗi kết nối AI: " + str(e)
+        try:
+            response = model.generate_content(SYSTEM_PROMPT + "\nUser hỏi: " + user_message)
+            ai_reply = response.text
+            if len(ai_reply) > 2000: ai_reply = ai_reply[:1990] + "..."
+        except Exception as e:
+            ai_reply = "Lỗi hệ thống: " + str(e)
         
         requests.post(f"https://bot-api.zapps.me/bot{ZALO_BOT_TOKEN}/sendMessage", 
                       json={"chat_id": sender_id, "text": ai_reply})
