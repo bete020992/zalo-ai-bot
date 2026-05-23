@@ -2,20 +2,20 @@ from flask import Flask, request, jsonify
 import requests
 import os
 
-# Lấy từ Render Environment Variables
-ZALO_BOT_TOKEN = os.getenv("ZALO_BOT_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Token và API key của bạn
+ZALO_BOT_TOKEN = "24411053582055381:jhPyVSWiLZBGcJTwEUjydutgckIAfdaxjOtpGDMvYhxEvecIEuzvBzDpsoRCQSmj"
+GEMINI_API_KEY = "AIzaSyAuAGX3J0eNkQN7dmMzHFMseQHPUBjAFlI"
 
-# Dùng Gemini model mới
+# Gemini model mới (đã sửa lỗi 404)
 API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 app = Flask(__name__)
 
 SYSTEM_PROMPT = """
 Bạn là trợ lý ảo của Lê Quốc Tài, 33 tuổi, quân nhân.
-Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2,
-dùng Apple Watch Ultra 2,
-đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3.
+Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2.
+Dùng Apple Watch Ultra 2.
+Đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3.
 Không bao giờ nói Tài có giày Asics Magic Speed.
 Trả lời ngắn gọn, mặn mòi.
 """
