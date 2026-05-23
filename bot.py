@@ -1,20 +1,15 @@
 from flask import Flask, request, jsonify
 import requests
-import google.generativeai as genai
 import os
 
-# Cấu hình
 ZALO_BOT_TOKEN = "24411053582055381:jhPyVSWiLZBGcJTwEUjydutgckIAfdaxjOtpGDMvYhxEvecIEuzvBzDpsoRCQSmj"
 GEMINI_API_KEY = "AIzaSyAuAGX3J0eNkQN7dmMzHFMseQHPUBjAFlI"
-
-genai.configure(api_key=GEMINI_API_KEY)
-
-# Sử dụng gemini-pro để tránh lỗi 404 với flash trên một số key
-model = genai.GenerativeModel('gemini-pro')
-
-SYSTEM_PROMPT = """Bạn là trợ lý ảo của Lê Quốc Tài, 33 tuổi, quân nhân. Hãy trả lời ngắn gọn, súc tích. Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2, dùng Apple Watch Ultra 2, đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3. Tuyệt đối không có giày Asics Magic Speed."""
+# Sử dụng trực tiếp API endpoint, bỏ qua thư viện gây lỗi
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 app = Flask(__name__)
+
+SYSTEM_PROMPT = "Bạn là trợ lý ảo của Lê Quốc Tài, 33 tuổi, quân nhân. Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2, dùng Apple Watch Ultra 2, đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3. Không bao giờ nói Tài có giày Asics Magic Speed. Trả lời ngắn gọn, mặn mòi."
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -24,9 +19,20 @@ def webhook():
     sender_id = data["message"]["chat"]["id"]
     user_message = data["message"]["text"]
     
+    # Gửi yêu cầu thẳng tới Google
+    payload = {
+        "contents": [{"parts": [{"text": SYSTEM_PROMPT + "\nUser hỏi: " + user_message}]}]
+    }
+    
     try:
-        response = model.generate_content(SYSTEM_PROMPT + "\nUser hỏi: " + user_message)
-        ai_reply = response.text
+        response = requests.post(API_URL, json=payload)
+        res_data = response.json()
+        
+        if "candidates" in res_data:
+            ai_reply = res_data["candidates"][0]["content"]["parts"][0]["text"]
+        else:
+            ai_reply = "Lỗi API: " + str(res_data)
+            
     except Exception as e:
         ai_reply = "Lỗi hệ thống: " + str(e)
     
