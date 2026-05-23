@@ -6,47 +6,35 @@ import os
 ZALO_BOT_TOKEN = "24411053582055381:jhPyVSWiLZBGcJTwEUjydutgckIAfdaxjOtpGDMvYhxEvecIEuzvBzDpsoRCQSmj"
 GEMINI_API_KEY = "AIzaSyAuAGX3J0eNkQN7dmMzHFMseQHPUBjAFlI"
 
-# Gemini model ổn định hơn
+# Gemini
 API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 app = Flask(__name__)
 
 SYSTEM_PROMPT = """
-Bạn là trợ lý AI cá nhân nói chuyện trên Zalo.
+Bạn là trợ lý AI cá nhân trên Zalo.
 
 CÁCH TRẢ LỜI:
-- Trả lời như người thật, tự nhiên, thông minh, không robot.
+- Trả lời tự nhiên như người thật.
 - Ngắn gọn nhưng đủ ý.
-- Nếu câu hỏi đơn giản thì trả lời ngắn.
-- Nếu câu hỏi cần giải thích thì giải thích dễ hiểu.
-- Không nói lan man, không giáo điều.
-- Nếu không biết thì nói không chắc, không bịa.
-- Nói tiếng Việt tự nhiên.
+- Không lan man.
+- Không bịa nếu không biết.
 
 PHONG CÁCH:
 - Thông minh
-- Hơi hài nhẹ
-- Mặn mòi vừa phải
-- Có cảm xúc như người thật
-- Không trả lời ngáo
+- Hài nhẹ
+- Tự nhiên
 
 THÔNG TIN CHỦ:
 Bạn đang hỗ trợ cho Lê Quốc Tài, 33 tuổi, quân nhân.
 Cao 1m72, nặng 76kg.
-Đam mê chạy bộ sub-2.
+Đam mê chạy bộ.
 Dùng Apple Watch Ultra 2.
 Đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, giày SP3.
 Không bao giờ nói Tài có giày Asics Magic Speed.
-
-QUY TẮC:
-- Nếu người dùng hỏi linh tinh thì trả lời tự nhiên như bạn bè.
-- Nếu hỏi kiến thức thì trả lời chính xác.
-- Nếu hỏi vui thì vui lại.
-- Nếu người dùng chửi thì đáp tỉnh.
-- Không được bịa chuyện.
 """
 
-# Bộ nhớ đơn giản cho từng user
+# Memory đơn giản
 chat_memory = {}
 
 def ask_gemini(user_id, user_message):
@@ -82,6 +70,10 @@ AI:
         response = requests.post(API_URL, json=payload, timeout=30)
         res_data = response.json()
 
+        # HIỆN LỖI THẬT
+        if "error" in res_data:
+            return "Lỗi Gemini: " + str(res_data["error"])
+
         if "candidates" in res_data:
             ai_reply = res_data["candidates"][0]["content"]["parts"][0]["text"]
 
@@ -91,19 +83,10 @@ AI:
 
             return ai_reply
 
-        elif "error" in res_data:
-            error_msg = res_data["error"]["message"]
-
-            if "quota" in error_msg.lower():
-                return "Tôi đang bận chút 😄 hỏi lại sau 30 giây nhé."
-
-            return "AI đang bận, thử lại sau."
-
-        else:
-            return "AI đang bận, thử lại sau."
+        return "Gemini trả dữ liệu lạ: " + str(res_data)
 
     except Exception as e:
-        return "Lỗi hệ thống."
+        return "Lỗi hệ thống: " + str(e)
 
 
 def send_zalo_message(chat_id, text):
