@@ -4,8 +4,8 @@ import os
 
 ZALO_BOT_TOKEN = "24411053582055381:jhPyVSWiLZBGcJTwEUjydutgckIAfdaxjOtpGDMvYhxEvecIEuzvBzDpsoRCQSmj"
 GEMINI_API_KEY = "AIzaSyAuAGX3J0eNkQN7dmMzHFMseQHPUBjAFlI"
-# Sử dụng trực tiếp API endpoint, bỏ qua thư viện gây lỗi
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+# Đổi từ v1beta sang v1
+API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 app = Flask(__name__)
 
@@ -19,7 +19,6 @@ def webhook():
     sender_id = data["message"]["chat"]["id"]
     user_message = data["message"]["text"]
     
-    # Gửi yêu cầu thẳng tới Google
     payload = {
         "contents": [{"parts": [{"text": SYSTEM_PROMPT + "\nUser hỏi: " + user_message}]}]
     }
@@ -31,6 +30,7 @@ def webhook():
         if "candidates" in res_data:
             ai_reply = res_data["candidates"][0]["content"]["parts"][0]["text"]
         else:
+            # In ra lỗi cụ thể để biết nó là gì
             ai_reply = "Lỗi API: " + str(res_data)
             
     except Exception as e:
