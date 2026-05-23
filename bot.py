@@ -6,10 +6,17 @@ ZALO_BOT_TOKEN = "24411053582055381:jhPyVSWiLZBGcJTwEUjydutgckIAfdaxjOtpGDMvYhxE
 GEMINI_API_KEY = "AIzaSyCqjp9FFzs2A5ntXEF6VJ2a2Cy-zuMJL5Y"
 
 genai.configure(api_key=GEMINI_API_KEY)
-# Ép dùng gemini-pro để tránh lỗi 404
-model = genai.GenerativeModel('gemini-pro')
 
-SYSTEM_PROMPT = """Bạn là trợ lý ảo cá nhân của Lê Quốc Tài, 33 tuổi, quân nhân. Hãy trả lời ngắn gọn, súc tích (dưới 2000 ký tự). Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2, dùng Apple Watch Ultra 2, đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3. Tuyệt đối không có giày Asics Magic Speed."""
+# Tự dò tìm model khả dụng
+def get_model():
+    for m in genai.list_models():
+        if 'generateContent' in m.supported_generation_methods:
+            return genai.GenerativeModel(m.name)
+    return None
+
+model = get_model()
+
+SYSTEM_PROMPT = """Bạn là trợ lý ảo của Lê Quốc Tài, 33 tuổi, quân nhân. Hãy trả lời ngắn gọn, súc tích (dưới 2000 ký tự). Tài cao 1m72, nặng 76kg, đam mê chạy bộ sub-2, dùng Apple Watch Ultra 2, đi giày Nike Pegasus, Novablast 5, Puma Deviate Nitro 3, Giày sp3. Tuyệt đối không có giày Asics Magic Speed."""
 
 app = Flask(__name__)
 
@@ -19,9 +26,14 @@ def webhook():
     if data and data.get("event_name") == "message.text.received":
         sender_id = data["message"]["chat"]["id"]
         user_message = data["message"]["text"]
+        
         try:
-            response = model.generate_content(SYSTEM_PROMPT + "\nUser hỏi: " + user_message)
-            ai_reply = response.text
+            if model:
+                response = model.generate_content(SYSTEM_PROMPT + "\nUser hỏi: " + user_message)
+                ai_reply = response.text
+            else:
+                ai_reply = "Lỗi: Không tìm thấy model AI nào khả dụng."
+            
             if len(ai_reply) > 2000: ai_reply = ai_reply[:1990] + "..."
         except Exception as e:
             ai_reply = "Lỗi hệ thống: " + str(e)
