@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
 import google.generativeai as genai
+import os # Thêm dòng này
 
 ZALO_BOT_TOKEN = "24411053582055381:jhPyVSWiLZBGcJTwEUjydutgckIAfdaxjOtpGDMvYhxEvecIEuzvBzDpsoRCQSmj"
 GEMINI_API_KEY = "AIzaSyCqjp9FFzs2A5ntXEF6VJ2a2Cy-zuMJL5Y"
@@ -9,9 +10,12 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 # Tự dò tìm model khả dụng
 def get_model():
-    for m in genai.list_models():
-        if 'generateContent' in m.supported_generation_methods:
-            return genai.GenerativeModel(m.name)
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                return genai.GenerativeModel(m.name)
+    except:
+        pass
     return None
 
 model = get_model()
@@ -43,4 +47,6 @@ def webhook():
     return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    # Dòng này cực kỳ quan trọng:
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
